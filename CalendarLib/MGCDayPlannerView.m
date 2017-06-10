@@ -202,6 +202,8 @@ static const CGFloat kMaxHourSlotHeight = 150.;
     
     _durationForNewTimedEvent = 60 * 60;
     
+    self.gridViewType = MGCHourGridDivision_60_Minutes;
+    
 	self.backgroundColor = [UIColor whiteColor];
 	self.autoresizesSubviews = NO;
 	
@@ -401,7 +403,7 @@ static const CGFloat kMaxHourSlotHeight = 150.;
 // public
 - (void)setHourRange:(NSRange)hourRange
 {
-    NSAssert(hourRange.length >= 1 && NSMaxRange(hourRange) <= 24, @"Invalid hour range %@", NSStringFromRange(hourRange));
+//    NSAssert(hourRange.length >= 1 && NSMaxRange(hourRange) <= 24, @"Invalid hour range %@", NSStringFromRange(hourRange));
     
     CGFloat yCenterOffset = self.timeScrollView.contentOffset.y + self.timeScrollView.bounds.size.height / 2.;
     NSTimeInterval ti = [self timeFromOffset:yCenterOffset rounding:0];
@@ -634,6 +636,7 @@ static const CGFloat kMaxHourSlotHeight = 150.;
 // public
 - (NSDate*)dateAtPoint:(CGPoint)point rounded:(BOOL)rounded
 {
+    CGFloat timeSlotDuration = [self slotValue];
 	if (self.dayColumnsView.contentSize.width == 0) return nil;
 	
 	CGPoint ptDayColumnsView = [self convertPoint:point toView:self.dayColumnsView];
@@ -647,13 +650,53 @@ static const CGFloat kMaxHourSlotHeight = 150.;
 		CGPoint ptTimedEventsView = [self convertPoint:point toView:self.timedEventsView];
 		if ([self.timedEventsView pointInside:ptTimedEventsView withEvent:nil]) {
             // max time for is 23:59
-			NSTimeInterval ti = fminf([self timeFromOffset:ptTimedEventsView.y rounding:15], 24 * 3600. - 60);
+			//NSTimeInterval ti = fminf([self timeFromOffset:ptTimedEventsView.y rounding:15], 24 * 3600. - 60);
+            NSTimeInterval ti = fminf([self timeFromOffset:ptTimedEventsView.y rounding:15], NSMaxRange(self.hourRange) * (60*timeSlotDuration) - 60);
 			date = [date dateByAddingTimeInterval:ti];
 		}
+        NSLog(@"dateAtPoint %@",date);
 		return date;
 	}
 	return nil;
 }
+
+- (CGFloat)slotValue {
+    CGFloat timeSlotDiff = 0.0f;
+    switch (self.gridViewType) {
+        case MGCHourGridDivision_NONE:
+            timeSlotDiff = 60;
+            break;
+            
+        case MGCHourGridDivision_05_Minutes:
+            timeSlotDiff = 5;
+            break;
+            
+        case MGCHourGridDivision_10_Minutes:
+            timeSlotDiff = 10;
+            break;
+        case MGCHourGridDivision_15_Minutes:
+            timeSlotDiff = 15;
+            break;
+        case MGCHourGridDivision_20_Minutes:
+            timeSlotDiff = 20;
+            break;
+        case MGCHourGridDivision_30_Minutes:
+            timeSlotDiff = 30;
+            break;
+        case MGCHourGridDivision_45_Minutes:
+            timeSlotDiff = 45;
+            break;
+            
+        case MGCHourGridDivision_60_Minutes:
+            timeSlotDiff = 60;
+            break;
+            
+        default:
+            break;
+    }
+    return timeSlotDiff;
+}
+
 
 // public
 - (MGCEventView*)eventViewAtPoint:(CGPoint)point type:(MGCEventType*)type index:(NSUInteger*)index date:(NSDate**)date
@@ -1543,6 +1586,48 @@ static const CGFloat kMaxHourSlotHeight = 150.;
 	}
 }
 
+- (void)setGridViewType:(MGCHourGridDivision)gridViewType {
+    CGFloat slotTime = gridViewType;
+    CGFloat slotRange = 0;
+    CGFloat hours = 24;
+    _gridViewType = gridViewType;
+    switch (gridViewType) {
+        case MGCHourGridDivision_NONE:
+            slotRange = 24;
+            break;
+
+        case MGCHourGridDivision_05_Minutes:
+            slotRange = (24 * 60)/5;
+            break;
+
+        case MGCHourGridDivision_10_Minutes:
+            slotRange = (24 * 60)/10;
+            break;
+        case MGCHourGridDivision_15_Minutes:
+            slotRange = (24 * 60)/15;
+            break;
+        case MGCHourGridDivision_20_Minutes:
+            slotRange = (24 * 60)/20;
+            break;
+        case MGCHourGridDivision_30_Minutes:
+            slotRange = (24 * 60)/30;
+            break;
+        case MGCHourGridDivision_45_Minutes:
+            slotRange = (24 * 60)/45;
+            break;
+
+        case MGCHourGridDivision_60_Minutes:
+            slotRange = 24 * 1;
+            break;
+
+        default:
+            break;
+    }
+    self.timeRowsView.gridViewType = gridViewType;
+    self.hourRange = NSMakeRange(0, slotRange);
+    self.durationForNewTimedEvent = [self slotValue] * 60;
+}
+
 // public
 - (void)reloadEventsAtDate:(NSDate*)date
 {
@@ -1883,6 +1968,7 @@ static const CGFloat kMaxHourSlotHeight = 150.;
 	}
 	else if (type == MGCAllDayEventType) {
 		cvCell = (MGCEventCell*)[self.allDayEventsView dequeueReusableCellWithReuseIdentifier:EventCellReuseIdentifier forIndexPath:indexPath];
+        cvCell.backgroundColor = [UIColor greenColor];
 	}
 	
 	cvCell.eventView = cell;
@@ -1905,6 +1991,10 @@ static const CGFloat kMaxHourSlotHeight = 150.;
 		return [self dayColumnCellAtIndexPath:indexPath];
 	}
 	return nil;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    NSLog(@"indexPath %@", indexPath);
 }
 
 - (UICollectionReusableView*)collectionView:(UICollectionView*)collectionView viewForSupplementaryElementOfKind:(NSString*)kind atIndexPath:(NSIndexPath*)indexPath

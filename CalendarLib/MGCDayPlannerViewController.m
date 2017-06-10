@@ -62,6 +62,7 @@
 - (void)loadView
 {
 	MGCDayPlannerView *dayPlannerView = [[MGCDayPlannerView alloc]initWithFrame:CGRectZero];
+    dayPlannerView.gridViewType = MGCHourGridDivision_15_Minutes;
 	dayPlannerView.autoresizingMask = UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth;
 	self.dayPlannerView = dayPlannerView;
     self.dayPlannerView.autoresizesSubviews = YES;

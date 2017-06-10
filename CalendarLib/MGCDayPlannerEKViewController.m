@@ -355,6 +355,7 @@ static NSString* const EventCellReuseIdentifier = @"EventCellReuseIdentifier";
             count = [[self eventsOfType:TimedEventType forDay:date]count];
         }
     }
+    NSLog(@"Nsdate %@",date);
     return count;
 }
 

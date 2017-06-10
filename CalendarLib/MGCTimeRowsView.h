@@ -51,6 +51,7 @@
 @property (nonatomic) UIColor *timeColor;				// color used for time marks and lines
 @property (nonatomic) UIColor *currentTimeColor;		// color used for current time mark and line
 @property (nonatomic, weak) id<MGCTimeRowsViewDelegate> delegate;
+@property (nonatomic, assign) MGCHourGridDivision gridViewType;
 
 @end
 

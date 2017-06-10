@@ -82,8 +82,49 @@
 
 - (void)setHourRange:(NSRange)hourRange
 {
-    NSAssert(hourRange.length >= 1 && NSMaxRange(hourRange) <= 24, @"Invalid hour range %@", NSStringFromRange(hourRange));
+ //   NSAssert(hourRange.length >= 1 && NSMaxRange(hourRange) <= 24, @"Invalid hour range %@", NSStringFromRange(hourRange));
     _hourRange = hourRange;
+}
+
+- (void)setGridViewType:(MGCHourGridDivision)gridViewType {
+    CGFloat slotTime = gridViewType;
+    CGFloat slotRange = 0;
+    CGFloat hours = 24;
+    _gridViewType = gridViewType;
+    
+    switch (gridViewType) {
+        case MGCHourGridDivision_NONE:
+            slotRange = 24;
+            break;
+            
+        case MGCHourGridDivision_05_Minutes:
+            slotRange = (24 * 60)/5;
+            break;
+            
+        case MGCHourGridDivision_10_Minutes:
+            slotRange = (24 * 60)/10;
+            break;
+        case MGCHourGridDivision_15_Minutes:
+            slotRange = (24 * 60)/15;
+            break;
+        case MGCHourGridDivision_20_Minutes:
+            slotRange = (24 * 60)/20;
+            break;
+        case MGCHourGridDivision_30_Minutes:
+            slotRange = (24 * 60)/30;
+            break;
+        case MGCHourGridDivision_45_Minutes:
+            slotRange = (24 * 60)/45;
+            break;
+            
+        case MGCHourGridDivision_60_Minutes:
+            slotRange = 24 * 1;
+            break;
+            
+        default:
+            break;
+    }
+    self.hourRange = NSMakeRange(0, slotRange);
 }
 
 - (void)setTimeMark:(NSTimeInterval)timeMark
@@ -101,11 +142,15 @@
 // result can be negative if hour range doesn't start at 0
 - (CGFloat)yOffsetForTime:(NSTimeInterval)time rounded:(BOOL)rounded
 {
+    CGFloat timeSlot = [self slotValue];
     if (rounded) {
 		time = roundf(time / (self.rounding * 60)) * (self.rounding * 60);
 	}
-    return (time / 3600. - self.hourRange.location) * self.hourSlotHeight + self.insetsHeight;
+    return (time / (60*timeSlot) - self.hourRange.location) * self.hourSlotHeight + self.insetsHeight;
 }
+
+//CGFloat timeSlot = [self slotValue];
+//markAttrStr = [self attributedStringForTimeMark:MGCDayPlannerTimeMarkHeader time:(i % NSMaxRange(self.hourRange))*(60*timeSlot)];
 
 // time is the interval since the start of the day
 - (NSString*)stringForTime:(NSTimeInterval)time rounded:(BOOL)rounded minutesOnly:(BOOL)minutesOnly
@@ -192,8 +237,10 @@
     
 	// draw the hour marks
 	for (NSUInteger i = self.hourRange.location; i <=  NSMaxRange(self.hourRange); i++) {
-		
-        markAttrStr = [self attributedStringForTimeMark:MGCDayPlannerTimeMarkHeader time:(i % 24)*3600];
+        CGFloat timeSlot = [self slotValue];
+        markAttrStr = [self attributedStringForTimeMark:MGCDayPlannerTimeMarkHeader time:(i % NSMaxRange(self.hourRange))*(60*timeSlot)];
+     // markAttrStr = [self attributedStringForTimeMark:MGCDayPlannerTimeMarkHeader time:(i % 24)*3600];// For reference i left it like this
+        
         markSize = [markAttrStr boundingRectWithSize:markSizeMax options:NSStringDrawingUsesLineFragmentOrigin context:nil].size;
         
         y = MGCAlignedFloat((i - self.hourRange.location) * self.hourSlotHeight + self.insetsHeight) - lineWidth * .5;
@@ -225,6 +272,43 @@
 	if (drawTimeMark) {
         [floatingMarkAttrStr drawInRect:rectTimeMark];
 	}
+}
+
+- (CGFloat)slotValue {
+    CGFloat timeSlotDiff = 0.0f;
+    switch (self.gridViewType) {
+        case MGCHourGridDivision_NONE:
+            timeSlotDiff = 60;
+            break;
+            
+        case MGCHourGridDivision_05_Minutes:
+            timeSlotDiff = 5;
+            break;
+            
+        case MGCHourGridDivision_10_Minutes:
+            timeSlotDiff = 10;
+            break;
+        case MGCHourGridDivision_15_Minutes:
+            timeSlotDiff = 15;
+            break;
+        case MGCHourGridDivision_20_Minutes:
+            timeSlotDiff = 20;
+            break;
+        case MGCHourGridDivision_30_Minutes:
+            timeSlotDiff = 30;
+            break;
+        case MGCHourGridDivision_45_Minutes:
+            timeSlotDiff = 45;
+            break;
+            
+        case MGCHourGridDivision_60_Minutes:
+            timeSlotDiff = 60;
+            break;
+            
+        default:
+            break;
+    }
+    return timeSlotDiff;
 }
 
 @end
